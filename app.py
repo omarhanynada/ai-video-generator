@@ -4,6 +4,7 @@ import asyncio
 import edge_tts
 import os
 import json
+import re
 
 # --- حل مشكلة استيراد MoviePy ---
 try:
@@ -15,7 +16,7 @@ except ImportError:
         st.error("⚠️ فشل في تحميل مكتبة MoviePy.")
 
 # ==========================================
-# ✅ تم وضع مفتاحك الخاص هنا
+# ✅ مفتاحك الخاص مدمج هنا
 GROQ_API_KEY = "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"
 # ==========================================
 
@@ -25,24 +26,30 @@ async def generate_video_logic(idea):
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         
-        prompt = "Create a short viral video script for: " + idea + ". Output ONLY a valid JSON object with this structure: {'scenes': [{'visual': 'detailed english image prompt', 'text': 'short arabic voiceover'}]}. Max 3 scenes."
+        # برومبت قوي لإجبار الموديل على إخراج JSON بدون استخدام response_format
+        prompt = (
+            f"You are a professional content creator. Create a short viral video script about: {idea}. "
+            f"Return the response ONLY as a valid JSON object. Do not write any intro or outro. "
+            f"The JSON structure must be: "
+            f"{{'scenes': [{{'visual': 'detailed english image prompt', 'text': 'short arabic voiceover'}}]}}. "
+            f"Keep it to 3 scenes maximum."
+        )
         
         response_raw = requests.post(url, headers=headers, json={
             "model": "llama3-8b-8192",
             "messages": [{"role": "user", "content": prompt}],
-            "response_format": {"type": "json_object"}
+            "temperature": 0.7
         })
         
         if response_raw.status_code != 200:
-            return "API Error: " + str(response_raw.status_code)
+            return "API Error: " + str(response_raw.status_code) + " - " + response_raw.text
             
         response = response_raw.json()
-        
-        if 'choices' not in response:
-            return "Error: Unexpected response from AI"
-            
         content = response['choices'][0]['message']['content']
-        data = json.loads(content)
+        
+        # تنظيف الرد من أي علامات Markdown (مثل ```json ... ```)
+        json_str = re.sub(r'```json|```', '', content).strip()
+        data = json.loads(json_str)
         
         clips = []
         
@@ -82,10 +89,10 @@ idea_input = st.text_input("اكتب فكرة الفيديو هنا", placeholde
 
 if st.button("توليد الفيديو 🚀"):
     if idea_input:
-        with st.spinner("⏳ جاري العمل..."):
+        with st.spinner("⏳ جاري التفكير وتوليد الفيديو..."):
             video_result = asyncio.run(generate_video_logic(idea_input))
             if video_result.endswith(".mp4"):
-                st.success("✅ تم التوليد!")
+                st.success("✅ تم التوليد بنجاح!")
                 st.video(video_result)
                 with open(video_result, "rb") as file:
                     st.download_button("📥 تحميل الفيديو", data=file, file_name="ai_video.mp4")
