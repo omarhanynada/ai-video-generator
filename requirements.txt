@@ -2,3 +2,6 @@ streamlit
 requests
 edge-tts
 moviepy==1.0.3
+imageio[pyav]
+opencv-python-headless
+pillow
