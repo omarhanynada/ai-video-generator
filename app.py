@@ -16,7 +16,7 @@ except ImportError:
 
 # ==========================================
 # ⚠️ ضع مفتاح Groq الخاص بك هنا بالأسفل ⚠️
-GROQ_API_KEY = "ضع_مفتاحك_هنا"
+GROQ_API_KEY = "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"
 # ==========================================
 
 async def generate_video_logic(idea):
