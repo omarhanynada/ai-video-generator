@@ -26,7 +26,7 @@ async def generate_video_logic(idea):
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         
-        # برومبت قوي لإجبار الموديل على إخراج JSON بدون استخدام response_format
+        # برومبت قوي لإجبار الموديل على إخراج JSON
         prompt = (
             f"You are a professional content creator. Create a short viral video script about: {idea}. "
             f"Return the response ONLY as a valid JSON object. Do not write any intro or outro. "
@@ -35,8 +35,9 @@ async def generate_video_logic(idea):
             f"Keep it to 3 scenes maximum."
         )
         
+        # تم تحديث الموديل هنا إلى llama-3.1-8b-instant
         response_raw = requests.post(url, headers=headers, json={
-            "model": "llama3-8b-8192",
+            "model": "llama-3.1-8b-instant", 
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.7
         })
@@ -47,7 +48,7 @@ async def generate_video_logic(idea):
         response = response_raw.json()
         content = response['choices'][0]['message']['content']
         
-        # تنظيف الرد من أي علامات Markdown (مثل ```json ... ```)
+        # تنظيف الرد من أي علامات Markdown
         json_str = re.sub(r'```json|```', '', content).strip()
         data = json.loads(json_str)
         
